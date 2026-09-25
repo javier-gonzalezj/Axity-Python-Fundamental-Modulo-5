@@ -1,7 +1,7 @@
 [project]
-name = "libreria-m4"
+name = "libreria-m5"
 version = "0.1.0"
-description = "Programa de administracion de mi libreria. Python Fundamental Modulo 4"
+description = "Programa de administracion de mi libreria. Python Fundamental Modulo 5"
 authors = [
     {name = "javier-gonzalezj",email = "jgjeronimo@gmail.com"}
 ]
@@ -42,11 +42,19 @@ known-first-party = ["libreria_m5"]
 quote-style = "double"
 indent-style = "space"
 
+[tool.mypy]
+python_version = "3.13"
+files = ["src"]
+strict = true
+plugins = ["pydantic.mypy"]   # mypy entiende mejor los modelos de pydantic
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [dependency-groups]
 dev = [
-    "ruff (>=0.16.9,<0.17.0)"
+    "ruff (>=0.16.9,<0.17.0)",
+    "mypy (>=2.3.1,<3.0.0)",
+    "pre-commit (>=4.6.2,<5.0.0)"
 ]
