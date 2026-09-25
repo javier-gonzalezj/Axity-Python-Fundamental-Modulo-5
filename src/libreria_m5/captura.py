@@ -1,4 +1,9 @@
-def capturar_libro(data: dict) -> dict:
+from typing import Any
+
+from libreria_m5.modelos import Libreria, Libro
+
+
+def capturar_libro(data: Libreria) -> dict[str, Any]:
     """Solicita al usuario los datos de un nuevo libro por consola."""
     print("\n📖 Nuevo libro")
     print("-" * 40)
@@ -64,13 +69,13 @@ def capturar_libro(data: dict) -> dict:
 
 
 def filtrar_libros(
-    data: dict,
+    data: Libreria,
     autor: str | None = None,
     genero: str | None = None,
     en_stock: bool | None = None,
     precio_max: float | None = None,
     año_min: int | None = None,
-) -> list[dict]:
+) -> list[Libro]:
     """Filtra el catálogo de libros según los criterios indicados.
 
     Cualquier parámetro que se deje en None se ignora (no filtra por ese campo).
@@ -78,15 +83,11 @@ def filtrar_libros(
     resultado = data["libros"]
 
     if autor is not None:
-        resultado = [
-            libro for libro in resultado if autor.lower() in libro.autor.nombre.lower()
-        ]
+        resultado = [libro for libro in resultado if autor.lower() in libro.autor.nombre.lower()]
 
     if genero is not None:
         resultado = [
-            libro
-            for libro in resultado
-            if any(genero.lower() in g.lower() for g in libro.genero)
+            libro for libro in resultado if any(genero.lower() in g.lower() for g in libro.genero)
         ]
 
     if en_stock is not None:
@@ -101,7 +102,7 @@ def filtrar_libros(
     return resultado
 
 
-def capturar_filtros(data: dict) -> list[dict]:
+def capturar_filtros(data: Libreria) -> list[Libro]:
     """Pregunta al usuario qué filtros quiere aplicar y devuelve el resultado."""
 
     print("\n🔍 Filtrar libros")
@@ -113,6 +114,7 @@ def capturar_filtros(data: dict) -> list[dict]:
     genero = input("Género: ").strip() or None
 
     en_stock_texto = input("¿Solo en stock? (s/n, vacío = no filtrar): ").strip().lower()
+    en_stock: bool | None
     if en_stock_texto == "s":
         en_stock = True
     elif en_stock_texto == "n":
@@ -121,7 +123,7 @@ def capturar_filtros(data: dict) -> list[dict]:
         en_stock = None
 
     precio_max_texto = input("Precio máximo: ").strip()
-    precio_max = None
+    precio_max: float | None = None
     if precio_max_texto:
         try:
             precio_max = float(precio_max_texto)
@@ -129,7 +131,7 @@ def capturar_filtros(data: dict) -> list[dict]:
             print("  ⚠️  Precio inválido, se ignora este filtro.")
 
     año_min_texto = input("Año de publicación mínimo: ").strip()
-    año_min = None
+    año_min: int | None = None
     if año_min_texto:
         try:
             año_min = int(año_min_texto)

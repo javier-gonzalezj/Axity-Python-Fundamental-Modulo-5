@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Final
 
 from libreria_m5.captura import capturar_filtros, capturar_libro
 from libreria_m5.excepciones import LibreriaError
@@ -17,7 +18,7 @@ from libreria_m5.utilidades import cronometro
 def main() -> None:
     os.system("cls" if os.name == "nt" else "clear")
 
-    LIBROS_POR_PAGINA = 3
+    LIBROS_POR_PAGINA: Final = 3
     ruta_json = Path(__file__).parent.parent.parent / "data" / "libreria.json"
 
     print("\nSCRIPT DE MANEJO DE CATALOGO DE LIBROS (MODULO 5)\n")

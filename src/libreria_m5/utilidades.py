@@ -4,7 +4,7 @@ import os
 import random
 import tempfile
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TextIO
@@ -12,13 +12,13 @@ from typing import TextIO
 log = logging.getLogger(__name__)
 
 
-def reintentar(
+def reintentar[**P, R](
     intentos: int = 3,
     espera_inicial: float = 0.5,
     factor: float = 2.0,
     espera_maxima: float = 10.0,
     excepciones: tuple[type[BaseException], ...] = (Exception,),
-) -> Callable:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Reintenta la función decorada con backoff exponencial y jitter.
 
     Solo reintenta si la excepción es de alguno de los tipos en `excepciones`.
@@ -27,9 +27,9 @@ def reintentar(
     if intentos < 1:
         raise ValueError("intentos debe ser al menos 1")
 
-    def decorador(func: Callable) -> Callable:
+    def decorador(func: Callable[P, R]) -> Callable[P, R]:
         @functools.wraps(func)
-        def envoltura(*args, **kwargs):
+        def envoltura(*args: P.args, **kwargs: P.kwargs) -> R:
             for intento in range(1, intentos + 1):
                 try:
                     return func(*args, **kwargs)
@@ -48,10 +48,14 @@ def reintentar(
                         espera,
                     )
                     time.sleep(espera)
+            # Nunca se llega aquí: el último intento siempre retorna o relanza.
+            # Este raise existe para que mypy no reporte "Missing return statement".
+            raise AssertionError("reintentar: el bucle terminó sin retornar")
 
         return envoltura
 
     return decorador
+
 
 @reintentar(intentos=3, espera_inicial=0.2, excepciones=(PermissionError,))
 def _reemplazar(origen: str | Path, destino: str | Path) -> None:
@@ -62,8 +66,9 @@ def _reemplazar(origen: str | Path, destino: str | Path) -> None:
     """
     os.replace(origen, destino)
 
+
 @contextmanager
-def cronometro(etiqueta: str = "Bloque") -> Iterator[None]:
+def cronometro(etiqueta: str = "Bloque") -> Generator[None]:
     """Context manager de temporizacion: Imprime cuanto tiempo
     tardo en ejecutarse el bloque with aunque falle.
     """
@@ -74,8 +79,9 @@ def cronometro(etiqueta: str = "Bloque") -> Iterator[None]:
         duracion = time.perf_counter() - inicio
         print(f"\n{etiqueta}: {duracion:.4f}s\n")
 
+
 @contextmanager
-def escritura_atomica(ruta: str | Path, encoding: str = "utf-8") -> Iterator[TextIO]:
+def escritura_atomica(ruta: str | Path, encoding: str = "utf-8") -> Generator[TextIO]:
     """Escribe en un archivo temporal y reemplaza `ruta` solo si todo salió bien.
 
     Si ocurre un error durante la escritura, el archivo original queda intacto.

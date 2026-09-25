@@ -2,6 +2,7 @@ import json
 import math
 from itertools import batched
 from pathlib import Path
+from typing import Any, cast
 
 from libreria_m5.excepciones import (
     ArchivoJSONInvalidoError,
@@ -10,11 +11,11 @@ from libreria_m5.excepciones import (
     LibroInvalidoError,
     PermisoArchivoError,
 )
-from libreria_m5.modelos import Libro
+from libreria_m5.modelos import Libreria, Libro
 from libreria_m5.utilidades import escritura_atomica
 
 
-def agregar_libro(data: dict, libro: Libro) -> dict:
+def agregar_libro(data: Libreria, libro: Libro) -> Libreria:
     """Agrega un nuevo libro al catálogo, verificando que el ISBN no exista ya.
 
     La validación de la estructura ya la hizo el modelo Libro al crearse.
@@ -27,7 +28,7 @@ def agregar_libro(data: dict, libro: Libro) -> dict:
     return data
 
 
-def cargar_datos(ruta: str | Path) -> dict:
+def cargar_datos(ruta: str | Path) -> Libreria:
     """Carga los datos de la librería desde un archivo JSON.
 
     Los libros se convierten a objetos Libro (validados); el resto de los datos
@@ -35,7 +36,7 @@ def cargar_datos(ruta: str | Path) -> dict:
     """
     try:
         with open(ruta, encoding="utf-8") as f:
-            data = json.load(f)
+            data: dict[str, Any] = json.load(f)
     except FileNotFoundError:
         raise ArchivoNoEncontradoError(f"No se encontró el archivo: {ruta}") from None
     except PermissionError:
@@ -55,16 +56,18 @@ def cargar_datos(ruta: str | Path) -> dict:
 
     # Conversión a entidad: cada dict del JSON se vuelve un Libro validado
     data["libros"] = [Libro.desde_dict(libro) for libro in data["libros"]]
-    return data
+    # cast no convierte nada: solo le asegura a mypy que, tras validar los libros,
+    # el diccionario ya tiene la forma de Libreria.
+    return cast(Libreria, data)
 
 
-def guardar_datos(ruta: str | Path, data: dict) -> None:
+def guardar_datos(ruta: str | Path, data: Libreria) -> None:
     """Guarda los datos de la librería en el archivo JSON."""
     ruta = Path(ruta)
 
     # Serialización: cada Libro se vuelve dict. Se crea una copia para no
     # modificar `data`, que el programa sigue usando con objetos Libro.
-    data_json = {**data, "libros": [libro.a_dict() for libro in data["libros"]]}
+    data_json: dict[str, Any] = {**data, "libros": [libro.a_dict() for libro in data["libros"]]}
 
     try:
         with escritura_atomica(ruta) as f:
@@ -85,7 +88,7 @@ def _mostrar_libro(libro: Libro) -> None:
     print(f"  {disponibilidad} — {libro.cantidad_disponible} unidades")
 
 
-def mostrar_libreria(data: dict, por_pagina: int = 5) -> None:
+def mostrar_libreria(data: Libreria, por_pagina: int = 5) -> None:
     """
     Imprime la información de la librería y su catálogo ordenado,
     paginado de `por_pagina` en `por_pagina`.
